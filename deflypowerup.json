@@ -1,0 +1,12 @@
+{
+  "name": "SuperpowerReworked",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "type": "replacement",
+  "replacements": [
+    "expressions/superpowerRecharge.json"
+  ],
+  "scripts": [
+    "scripts/main.js"
+  ]
+}

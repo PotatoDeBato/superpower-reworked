@@ -1,0 +1,4 @@
+{
+  "expression": "/\"Recharging \"\\+jT\\[C_\\]\\+\"\\.\\.\\.\"/",
+  "replacement": "\"Recharging \"+jT[C_]+\"... \"+Math.round((100 - J_) * aT[C_] / 100)+\"s\""
+}
