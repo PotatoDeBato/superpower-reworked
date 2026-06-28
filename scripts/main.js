@@ -1,4 +1,41 @@
-const dingSeconds = new Set([3, 2, 1]);
+const dingSeconds = new Set([3, 2, 1, 0]);
+const volumeStorageKey = "superpower_ready_volume";
+const volumeSubfeature = utils.SubFeatures?.superpower_ready_volume_slider;
+
+let volume = 50;
+
+function normalizeVolume(nextVolume) {
+	const parsedVolume = Number(nextVolume);
+	if (!Number.isFinite(parsedVolume)) {
+		return volume;
+	}
+
+	return Math.max(0, Math.min(100, parsedVolume));
+}
+
+function saveVolume(nextVolume) {
+	volume = normalizeVolume(nextVolume);
+	localStorage.setItem(volumeStorageKey, String(volume));
+}
+
+if (volumeSubfeature) {
+	if (typeof volumeSubfeature.whenChanged === "function") {
+		volumeSubfeature.whenChanged((Alpine) => {
+			saveVolume(Alpine?.value ?? Alpine);
+		});
+	}
+
+	if (localStorage.getItem(volumeStorageKey) === null && volumeSubfeature.value != null) {
+		saveVolume(volumeSubfeature.value);
+	}
+}
+
+const volumeTestButton = document.getElementById("superpower_ready_volume_test");
+if (volumeTestButton) {
+	volumeTestButton.addEventListener("click", () => {
+		playDing();
+	});
+}
 
 let lastAnnouncedSecond = null;
 let lastLabelText = "";
@@ -14,9 +51,29 @@ function getAudioContext() {
 	return audioContext;
 }
 
+function getStoredVolume() {
+	const rawVolume = localStorage.getItem(volumeStorageKey);
+	if (rawVolume === null) {
+		return normalizeVolume(volumeSubfeature?.value ?? volume);
+	}
+
+	const storedVolume = Number(rawVolume);
+	if (Number.isFinite(storedVolume)) {
+		return Math.max(0, Math.min(100, storedVolume));
+	}
+
+	return normalizeVolume(volumeSubfeature?.value ?? volume);
+}
+
 function playDing() {
 	const context = getAudioContext();
 	if (!context) return;
+
+	const currentVolume = getStoredVolume();
+	if (currentVolume <= 0) return;
+
+	const volumeScale = Math.max(0, Math.min(1, currentVolume / 100));
+	const peakGain = 0.14 * volumeScale;
 
 	if (context.state === "suspended") {
 		context.resume().catch(() => {});
@@ -31,7 +88,7 @@ function playDing() {
 	oscillator.frequency.exponentialRampToValueAtTime(1040, context.currentTime + 0.12);
 
 	gainNode.gain.setValueAtTime(0.0001, context.currentTime);
-	gainNode.gain.exponentialRampToValueAtTime(0.14, context.currentTime + 0.015);
+	gainNode.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain), context.currentTime + 0.015);
 	gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.18);
 
 	oscillator.connect(gainNode);
