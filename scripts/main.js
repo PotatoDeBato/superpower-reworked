@@ -18,12 +18,60 @@ function saveVolume(nextVolume) {
 	localStorage.setItem(volumeStorageKey, String(volume));
 }
 
+function persistVolumeFromCandidate(candidate) {
+	const nextVolume = candidate?.target?.value ?? candidate?.currentTarget?.value ?? candidate?.detail?.value ?? candidate?.value ?? candidate;
+	saveVolume(nextVolume);
+}
+
+function attachVolumeInputListener(element) {
+	if (!element || typeof element.addEventListener !== "function") return;
+
+	element.addEventListener("input", (event) => {
+		if (event.isTrusted === false) return;
+		persistVolumeFromCandidate(event);
+	});
+
+	element.addEventListener("change", (event) => {
+		if (event.isTrusted === false) return;
+		persistVolumeFromCandidate(event);
+	});
+}
+
+function attachVolumeListeners() {
+	const candidates = [
+		volumeSubfeature?.element,
+		volumeSubfeature?.el,
+		volumeSubfeature?.root,
+		volumeSubfeature?.container,
+		volumeSubfeature?.node,
+		volumeSubfeature?.input
+	].filter(Boolean);
+
+	for (const candidate of candidates) {
+		if (candidate.tagName === "INPUT" && candidate.type === "range") {
+			attachVolumeInputListener(candidate);
+			return;
+		}
+
+		const rangeInputs = candidate.querySelectorAll?.('input[type="range"]');
+		if (rangeInputs && rangeInputs.length) {
+			rangeInputs.forEach(attachVolumeInputListener);
+			return;
+		}
+	}
+
+	const fallbackRangeInputs = document.querySelectorAll('input[type="range"]');
+	fallbackRangeInputs.forEach(attachVolumeInputListener);
+}
+
 if (volumeSubfeature) {
 	if (typeof volumeSubfeature.whenChanged === "function") {
 		volumeSubfeature.whenChanged((Alpine) => {
-			saveVolume(Alpine?.value ?? Alpine);
+			volume = normalizeVolume(Alpine?.value ?? Alpine);
 		});
 	}
+
+	attachVolumeListeners();
 
 	if (localStorage.getItem(volumeStorageKey) === null && volumeSubfeature.value != null) {
 		saveVolume(volumeSubfeature.value);
