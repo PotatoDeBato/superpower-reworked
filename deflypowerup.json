@@ -8,5 +8,23 @@
   ],
   "scripts": [
     "scripts/main.js"
+  ],
+  "settings": [
+    {
+      "title": "Volume",
+      "id": "superpower_ready_volume_slider",
+      "type": "slider",
+      "default": 50,
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "snap": 1,
+      "stops": [0, 25, 50, 75, 100]
+    },
+    {
+      "title": "Test sound",
+      "id": "superpower_ready_volume_test",
+      "type": "button"
+    }
   ]
 }
